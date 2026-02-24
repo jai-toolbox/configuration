@@ -1,3 +1,60 @@
+/*
+Configuration:
+
+Reads and writes INI-style configuration files with sections, key-value
+pairs, and comment support (# and ;).
+
+Make files like this:
+
+settings.ini
+------------------------------------
+[window]
+width = 1280
+height = 720
+fullscreen = false
+
+[audio]
+master_volume = 0.8   ; range 0.0 - 1.0
+mute = false
+------------------------------------
+
+
+main.jai (or wherever)
+____________________________________
+config: Configuration;
+config.config_path = "settings.ini";
+init(*config);
+defer deinit(*config);
+
+// get values from the config file:
+title, found := get(*config, "window", "title");
+if found  print("Title: %\n", title);
+
+width,  ok_w := get_int(*config, "window", "width");
+height, ok_h := get_int(*config, "window", "height");
+if ok_w && ok_h  print("Resolution: % x %\n", width, height);
+
+vol, ok_v := get_float(*config, "audio", "master_volume");
+if ok_v  print("Volume: %\n", vol);
+
+fs, ok_f := get_bool(*config, "window", "fullscreen");
+if ok_f  print("Fullscreen: %\n", fs);
+
+// write values to the config, and then save them.
+set(*config, "window", "width", "1920");
+set_bool(*config, "window", "fullscreen", true);
+save(*config);                          // writes back to settings.ini
+save(*config, "settings_backup.ini");   // writes to a different path
+
+// hot-reloading from disk
+reload(*config);
+____________________________________
+*/
+
+
+
+
+
 #import "Basic";
 #import "File";
 #import "String";
