@@ -3,6 +3,16 @@
 #import "String";
 #import "Hash_Table";
 
+/*
+
+Something to think about here is that it might just be the best to literally just store whatever configuration you want via string serialization. 
+
+Because people still have to learn your configuration language, so why not make them learn the one that is the easiest for you to parse and most flexible. 
+
+So yeah that's probably what I'm going to do in the future if possible. Although I think from string would fail if it's not perfect, so we would need to guard against that.
+
+*/
+
 Configuration :: struct {
     config_path: string;
     values: Table(string, Table(string, string));
