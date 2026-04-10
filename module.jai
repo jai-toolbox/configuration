@@ -157,6 +157,11 @@ get :: (config: *Configuration, section: string, key: string) -> string, bool {
     return value, found;
 }
 
+get_string :: (config: *Configuration, section: string, key: string) -> string, bool {
+    value, found := get(config, section, key);
+    return value, found;
+}
+
 get_int :: (config: *Configuration, section: string, key: string) -> int, bool {
     str, found := get(config, section, key);
     if !found return 0, false;
@@ -189,6 +194,18 @@ set :: (config: *Configuration, section: string, key: string, value: string) {
 
 set_bool :: (config: *Configuration, section: string, key: string, value: bool) {
     set(config, section, key, ifx value then "true" else "false");
+}
+
+set_string :: (config: *Configuration, section: string, key: string, value: string) {
+    set(config, section, key, value);
+}
+
+set_int :: (config: *Configuration, section: string, key: string, value: int) {
+    set(config, section, key, tprint("%", value));
+}
+
+set_float :: (config: *Configuration, section: string, key: string, value: float) {
+    set(config, section, key, tprint("%", value));
 }
 
 save :: (config: *Configuration, path: string = "") -> bool {
