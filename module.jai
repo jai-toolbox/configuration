@@ -76,6 +76,9 @@ Configuration :: struct {
 }
 
 init :: (config: *Configuration) {
+    // we do this because we don't know if the string they give us is a compile-time string literal
+    // living in the read-only segment of memory, it probably is, but it might not be.
+    config.config_path = copy_string(config.config_path); 
     parse_config_file(config);
 }
 
