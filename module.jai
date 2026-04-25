@@ -84,15 +84,28 @@ init :: (config: *Configuration) {
 
 deinit :: (config: *Configuration) {
     free(config.config_path);
-    for * inner: config.values {
+    
+    // free section name strings (keys of outer table) and inner table contents
+    for * inner, section_name: config.values {
+        // free all key and value strings inside this section
+        for value, key: inner.* {
+            free(key);
+            free(value);
+        }
         deinit(inner);
+        free(section_name);
     }
     deinit(*config.values);
 }
 
 reload :: (config: *Configuration) {
-    for * inner: config.values {
+    for * inner, section_name: config.values {
+        for value, key: inner.* {
+            free(key);
+            free(value);
+        }
         deinit(inner);
+        free(section_name);
     }
     table_reset(*config.values);
     parse_config_file(config);
@@ -106,12 +119,22 @@ parse_config_file :: (config: *Configuration) {
     }
     defer free(contents);
 
-    // remove carriage returns first (handles windows line endings)
-    contents = replace(contents, "\r", "");
-    
+    // strip \r in-place (avoids replace's internal leak)
+    write_cursor := 0;
+    for i: 0..contents.count-1 {
+        if contents[i] != #char "\r" {
+            contents[write_cursor] = contents[i];
+            write_cursor += 1;
+        }
+    }
+    contents.count = write_cursor;
+
     current_section: string;
-    
-    for line: split(contents, "\n") {
+
+    lines := split(contents, "\n");
+    defer array_free(lines);
+
+    for line: lines {
         // strip comments
         working := line;
         for i: 0..line.count-1 {
@@ -120,31 +143,29 @@ parse_config_file :: (config: *Configuration) {
                 break;
             }
         }
-        
+
         working = trim(working);
         if working.count == 0 continue;
-        
+
         // Section header
         if working[0] == #char "[" && working[working.count-1] == #char "]" {
             current_section = copy_string(trim(slice(working, 1, working.count - 2)));
             continue;
         }
-        
+
         // key = value
         eq := find_index_from_left(working, "=");
         if eq < 0 continue;
-        
+
         key := copy_string(trim(slice(working, 0, eq)));
         raw_value := slice(working, eq + 1, working.count - eq - 1);
-        
-        // preserve single space if value is all spaces, otherwise trim
+
         all_spaces := true;
         for i: 0..raw_value.count-1 {
             if raw_value[i] != #char " " { all_spaces = false; break; }
         }
         value := copy_string(ifx all_spaces && raw_value.count > 0 then " " else trim(raw_value));
-        
-        // store it
+
         section_table := table_find_pointer(*config.values, current_section);
         if !section_table {
             section_table = table_add(*config.values, current_section, .{});
