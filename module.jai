@@ -177,7 +177,7 @@ parse_config_file :: (config: *Configuration) {
 get :: (config: *Configuration, section: string, key: string) -> string, bool {
     inner := table_find_pointer(*config.values, section);
     if !inner return "", false;
-    value, found := table_find(inner, key);
+    found, value := table_find(inner, key);
     return value, found;
 }
 
