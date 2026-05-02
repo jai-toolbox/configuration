@@ -211,9 +211,17 @@ get_bool :: (config: *Configuration, section: string, key: string) -> bool, bool
 set :: (config: *Configuration, section: string, key: string, value: string) {
     section_table := table_find_pointer(*config.values, section);
     if !section_table {
-        section_table = table_add(*config.values, section, .{});
+        section_key := copy_string(section);
+        section_table = table_add(*config.values, section_key, .{});
     }
-    table_set(section_table, key, value);
+
+    found, existing_value := table_find(section_table, key);
+    if found {
+        free(existing_value);
+        table_set(section_table, key, copy_string(value));
+    } else {
+        table_set(section_table, copy_string(key), copy_string(value));
+    }
 }
 
 set_bool :: (config: *Configuration, section: string, key: string, value: bool) {
